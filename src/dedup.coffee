@@ -29,6 +29,25 @@ only = []
 
 FAST_READ_BUFFER_SIZE = 10000
 
+logHelp = ->
+  console.log 'dedup <options> <directories>'
+  console.log '  -r, --recursive     search in directories recursively'
+  console.log '  -d, --delete        delete duplicates when found'
+  console.log '  -i, --ignore <path> ignore directories or files by relative path'
+  console.log '  -v, --verbose       log both duplicate files not just the first'
+  console.log '      --logging       developer output shows recursion and scanning'
+  console.log '  -f, --fast          build had from first 10kb of files for faster'
+  console.log '                      performance however hash conditions are possible'
+  console.log '      --unsafe        must be set when deleting files base on fast'
+  console.log '                      hash'
+  console.log '      --only <suffix> only find duplicates with files matching the'
+  console.log '                      suffix'
+  console.log '  -h, --help          show this message'
+
+
+
+
+
 i = 0
 while i < parameters.length
   parameter = parameters[i]
@@ -52,6 +71,9 @@ while i < parameters.length
     when '--only'
       only ?= []
       only.push parameters[++i]
+    when '-h', '--help'
+      logHelp()
+      process.exit 0
     else
       searchDirs.push parameter
   i++
