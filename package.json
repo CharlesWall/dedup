@@ -1,6 +1,6 @@
 {
   "name": "node-duplicate-finder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "find duplicate files on your file system",
   "main": "dedup.js",
   "dependencies": {

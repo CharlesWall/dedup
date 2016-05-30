@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 (function() {
-  var FAST_READ_BUFFER_SIZE, Promise, Queue, createReadStream, crypto, duplicates, fast, fileHashes, fileQueue, i, ignore, ignoreList, logHelp, only, outputDuplicate, parameter, parameters, path, readFileAsync, readFileFastAsync, readdirAsync, recursive, ref, removeDuplicate, scanDir, scanFile, searchDirs, startTime, statAsync, storeHash, unlinkAsync, unsafe, verbose, veryverbose;
+  var FAST_READ_BUFFER_SIZE, Promise, Queue, createReadStream, crypto, duplicates, fast, fileHashes, fileQueue, hashFileAsync, i, ignore, ignoreList, logHelp, only, outputDuplicate, parameter, parameters, path, readFileAsync, readdirAsync, recursive, ref, removeDuplicate, scanDir, scanFile, searchDirs, startTime, statAsync, storeHash, unlinkAsync, unsafe, verbose, veryverbose;
 
   Promise = require('bluebird');
 
@@ -122,26 +122,27 @@
     });
   }
 
-  readFileFastAsync = function(filePath) {
-    var bytesRead, datas, fileData;
-    fileData = new Buffer(FAST_READ_BUFFER_SIZE);
-    datas = [];
-    bytesRead = 0;
+  hashFileAsync = function(filePath, maxBytes) {
     return new Promise(function(resolve, reject) {
-      var readStream;
+      var bytesRead, finish, hash, readStream;
+      hash = crypto.createHash('md5');
+      finish = function() {
+        readStream.close();
+        return resolve(hash.digest('hex'));
+      };
       readStream = createReadStream(filePath);
+      bytesRead = 0;
       readStream.on('data', function(data) {
-        bytesRead += data.length;
-        datas.push(data);
-        if (bytesRead >= FAST_READ_BUFFER_SIZE) {
-          readStream.close();
-          return resolve(fileData);
+        if (maxBytes && (bytesRead + data.length) > maxBytes) {
+          hash.update(data.slice(0, maxBytes - bytesRead));
+          return finish();
+        } else {
+          bytesRead += data.length;
+          return hash.update(data);
         }
       });
-      readStream.on('end', resolve);
+      readStream.on('end', finish);
       return readStream.on('error', reject);
-    }).then(function() {
-      return Buffer.concat(datas).slice(0, FAST_READ_BUFFER_SIZE);
     });
   };
 
@@ -186,25 +187,14 @@
       }
     }
     return fileQueue.add(function() {
-      if (fast) {
-        if (veryverbose) {
-          console.log("fast read " + filePath);
-        }
-        return readFileFastAsync(filePath);
-      } else {
-        if (veryverbose) {
-          console.log("full read " + filePath);
-        }
-        return readFileAsync(filePath);
-      }
-    }).then(function(fileContents) {
-      return storeHash(fileContents, filePath);
+      return hashFileAsync(filePath, fast ? FAST_READ_BUFFER_SIZE : void 0);
+    }).then(function(hash) {
+      return storeHash(hash, filePath);
     });
   };
 
-  storeHash = function(fileContents, filePath) {
-    var existing, hash;
-    hash = crypto.createHash('md5').update(fileContents).digest('hex');
+  storeHash = function(hash, filePath) {
+    var existing;
     existing = fileHashes[hash] || [];
     existing.push(filePath);
     fileHashes[hash] = existing;

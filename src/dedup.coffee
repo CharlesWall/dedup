@@ -44,10 +44,6 @@ logHelp = ->
   console.log '                      suffix'
   console.log '  -h, --help          show this message'
 
-
-
-
-
 i = 0
 while i < parameters.length
   parameter = parameters[i]
@@ -88,21 +84,24 @@ if fast and removeDuplicate and not unsafe
 
 console.log {recursive, removeDuplicate, ignoreList, verbose, searchDirs} if veryverbose
 
-readFileFastAsync = (filePath)->
-  fileData = new Buffer(FAST_READ_BUFFER_SIZE)
-  datas = []
-  bytesRead = 0
+hashFileAsync = (filePath, maxBytes)->
   new Promise (resolve, reject)->
+    hash = crypto.createHash('md5')
+    finish = ->
+      readStream.close()
+      resolve hash.digest 'hex'
+
     readStream = createReadStream filePath
+    bytesRead = 0
     readStream.on 'data', (data)->
-      bytesRead += data.length
-      datas.push data
-      if (bytesRead >= FAST_READ_BUFFER_SIZE)
-        readStream.close()
-        resolve fileData
-    readStream.on 'end', resolve
+      if maxBytes and (bytesRead + data.length) > maxBytes
+        hash.update data.slice 0, maxBytes - bytesRead
+        finish()
+      else
+        bytesRead += data.length
+        hash.update(data)
+    readStream.on 'end', finish
     readStream.on 'error', reject
-  .then -> Buffer.concat(datas).slice 0, FAST_READ_BUFFER_SIZE
 
 outputDuplicate = (duplicates)->
   if verbose
@@ -131,18 +130,10 @@ scanFile = (filePath)->
     return unless match
 
   fileQueue.add(->
-    if fast
-      console.log "fast read #{filePath}" if veryverbose
-      readFileFastAsync filePath
-    else
-      console.log "full read #{filePath}" if veryverbose
-      readFileAsync filePath
-  ).then (fileContents) -> storeHash fileContents, filePath
+      hashFileAsync filePath, if fast then FAST_READ_BUFFER_SIZE
+  ).then (hash) -> storeHash hash, filePath
 
-storeHash = (fileContents, filePath)->
-  hash = crypto.createHash('md5')
-    .update(fileContents)
-    .digest('hex')
+storeHash = (hash, filePath)->
   existing = fileHashes[hash] || []
   existing.push filePath
   fileHashes[hash] = existing
