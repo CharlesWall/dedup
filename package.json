@@ -1,6 +1,6 @@
 {
   "name": "node-duplicate-finder",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "find duplicate files on your file system",
   "main": "dedup.js",
   "dependencies": {
@@ -13,6 +13,10 @@
   },
   "bin": {
     "dedup": "./dedup.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CharlesWall/dedup"
   },
   "devDependencies": {},
   "scripts": {
