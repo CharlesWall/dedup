@@ -143,8 +143,11 @@ storeHash = (hash, filePath)->
     if removeDuplicate
       fileQueue.add -> unlinkAsync filePath
 
-Promise.all searchDirs.map scanDir
-  .then ->
+searches = Promise.resolve()
+
+searchDirs.forEach (dir)->
+  searches = searches.then -> scanDir dir
+searches.then ->
     if veryverbose
       console.log "#{(Date.now() - startTime)/1000} seconds"
       console.log "#{duplicates.length} duplicates"

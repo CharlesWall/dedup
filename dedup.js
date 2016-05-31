@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 (function() {
-  var FAST_READ_BUFFER_SIZE, Promise, Queue, createReadStream, crypto, duplicates, fast, fileHashes, fileQueue, hashFileAsync, i, ignore, ignoreList, logHelp, only, outputDuplicate, parameter, parameters, path, readFileAsync, readdirAsync, recursive, ref, removeDuplicate, scanDir, scanFile, searchDirs, startTime, statAsync, storeHash, unlinkAsync, unsafe, verbose, veryverbose;
+  var FAST_READ_BUFFER_SIZE, Promise, Queue, createReadStream, crypto, duplicates, fast, fileHashes, fileQueue, hashFileAsync, i, ignore, ignoreList, logHelp, only, outputDuplicate, parameter, parameters, path, readFileAsync, readdirAsync, recursive, ref, removeDuplicate, scanDir, scanFile, searchDirs, searches, startTime, statAsync, storeHash, unlinkAsync, unsafe, verbose, veryverbose;
 
   Promise = require('bluebird');
 
@@ -209,7 +209,15 @@
     }
   };
 
-  Promise.all(searchDirs.map(scanDir)).then(function() {
+  searches = Promise.resolve();
+
+  searchDirs.forEach(function(dir) {
+    return searches = searches.then(function() {
+      return scanDir(dir);
+    });
+  });
+
+  searches.then(function() {
     if (veryverbose) {
       console.log(((Date.now() - startTime) / 1000) + " seconds");
       console.log(duplicates.length + " duplicates");
