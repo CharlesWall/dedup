@@ -11,7 +11,7 @@ dedup <options> <directory> <directory>...
 ```
 
 ##Example
-lists duplicate mp3 files recursively except for Lil Dicky's directory
+lists duplicate mp3 files recursively except for Jay-Z's directory
 ```bash
 dedup --ignore Jay-Z/ --only mp3 -r myMusic other/myFriendsMusic
 ```
