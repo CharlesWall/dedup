@@ -16,7 +16,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./build.sh && ./test.sh"
   },
   "author": "Charles T Wall III",
   "license": "MIT"
