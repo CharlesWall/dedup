@@ -2,7 +2,7 @@
 
 ##Installation
 ```bash
-npm install -g node-dupliccation-finder
+npm install -g node-duplicate-finder
 ```
 
 ##Usage
